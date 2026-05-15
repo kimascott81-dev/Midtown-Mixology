@@ -524,6 +524,7 @@ const INVENTORY = [
   { id:'teq1', name:'Patrón Silver', category:'Tequila', emoji:'🌵', color:'#fff9c4' },
   { id:'teq2', name:'Jose Cuervo Gold', category:'Tequila', emoji:'🌅', color:'#ffecb3' },
   { id:'whi1', name:'Jack Daniel\'s', category:'Whiskey', emoji:'🥃', color:'#d7ccc8' },
+  { id:'whi4', name:'Evan Williams Apple', category:'Whiskey', emoji:'🥃', color:'#d7ccc8' },
   { id:'whi2', name:'Jameson', category:'Whiskey', emoji:'☘️', color:'#c5e1a5' },
   { id:'whi3', name:'Fireball', category:'Whiskey', emoji:'🔥', color:'#ffab91' },
   { id:'liq1', name:'Triple Sec', category:'Liqueur', emoji:'🍊', color:'#ffe0b2' },
