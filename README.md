@@ -1,140 +1,445 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Midtown Mixology</title>
 <style>
-body { font-family: Arial, sans-serif; background: #0a0a12; color: #fff; margin: 0; padding: 0; height: 100vh; overflow: hidden; }
-#app { display: flex; flex-direction: column; height: 100vh; }
-header { background: #1a1a2e; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; }
-.logo { font-size: 1.4rem; font-weight: bold; color: #0ff; }
-.nav-btn { background: #222; color: #fff; border: 1px solid #444; padding: 8px 16px; border-radius: 8px; font-size: 1rem; cursor: pointer; }
-.nav-btn:active { background: #0ff; color: #000; }
-main { flex: 1; overflow-y: auto; padding: 20px; }
-.view { display: none; }
-.view.active { display: block; }
-h1 { font-size: 1.6rem; margin: 0 0 10px; }
-h2 { font-size: 1.4rem; margin: 0 0 8px; }
-p.sub { color: #888; margin: 0 0 15px; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    margin: 0; padding: 0; width: 100%; height: 100%;
+    background: #0a0a12; color: #fff;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    overflow: hidden; touch-action: manipulation;
+  }
+  #app {
+    position: relative; width: 100%; height: 100%;
+    display: flex; flex-direction: column;
+  }
 
-.home-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; max-width: 600px; margin: 20px auto; }
-.home-card { background: #1a1a2e; border: 2px solid #333; border-radius: 16px; padding: 25px; text-align: center; cursor: pointer; }
-.home-card:active { border-color: #0ff; background: #16213e; }
-.home-icon { font-size: 3rem; margin-bottom: 8px; }
-.home-title { font-size: 1.2rem; font-weight: bold; margin-bottom: 4px; }
-.home-desc { font-size: 0.85rem; color: #aaa; }
-@media(max-width: 500px) { .home-grid { grid-template-columns: 1fr; } }
+  /* Background */
+  .bg {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    z-index: 0; pointer-events: none;
+    background:
+      radial-gradient(ellipse at 20% 50%, rgba(255,0,170,0.12) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 20%, rgba(0,243,255,0.12) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 80%, rgba(255,215,0,0.08) 0%, transparent 50%);
+  }
+  .bubble {
+    position: absolute; bottom: -60px;
+    background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.6), rgba(255,255,255,0.05));
+    border-radius: 50%; opacity: 0.25;
+    animation: rise 10s infinite ease-in;
+    pointer-events: none;
+  }
+  @keyframes rise {
+    0% { transform: translateY(0) scale(1); opacity: 0.25; }
+    100% { transform: translateY(-120vh) scale(0.4); opacity: 0; }
+  }
 
-.filter-bar { display: flex; gap: 8px; overflow-x: auto; margin-bottom: 15px; padding-bottom: 5px; }
-.filter-btn { background: #222; border: 1px solid #444; color: #fff; padding: 8px 16px; border-radius: 20px; cursor: pointer; white-space: nowrap; font-size: 0.9rem; }
-.filter-btn.active { background: #0ff; color: #000; font-weight: bold; }
+  /* Header */
+  header {
+    position: relative; z-index: 2;
+    padding: 14px 20px;
+    background: rgba(26,26,46,0.9);
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    display: flex; justify-content: space-between; align-items: center;
+    flex-shrink: 0;
+  }
+  .logo {
+    font-size: 1.5rem; font-weight: 900;
+    background: linear-gradient(90deg, #00f3ff, #ff00aa, #ffd700);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    animation: glow 3s ease-in-out infinite alternate;
+  }
+  @keyframes glow {
+    from { filter: drop-shadow(0 0 5px rgba(0,243,255,0.4)); }
+    to { filter: drop-shadow(0 0 20px rgba(255,0,170,0.6)); }
+  }
+  .nav-btn {
+    display: inline-block;
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
+    color: #fff; padding: 10px 18px; border-radius: 12px;
+    font-size: 0.95rem; font-weight: 700; cursor: pointer;
+  }
+  .nav-btn:active { background: rgba(0,243,255,0.25); border-color: #00f3ff; }
 
-.card { background: #1a1a2e; border: 1px solid #333; border-radius: 12px; padding: 14px; margin-bottom: 10px; cursor: pointer; position: relative; }
-.card:active { border-color: #0ff; }
-.card-title { font-weight: bold; font-size: 1rem; margin-bottom: 4px; }
-.card-meta { color: #888; font-size: 0.8rem; margin-top: 3px; }
-.card-price { color: #ffd700; font-weight: bold; font-size: 0.95rem; margin-top: 4px; }
-.item-selected { border-color: #0f0 !important; background: rgba(0,255,0,0.08) !important; }
-.item-selected::after { content: 'OK'; position: absolute; top: 6px; right: 10px; color: #0f0; font-weight: 900; font-size: 0.8rem; }
-.premium-tag { color: #ffd700; font-size: 0.75rem; font-weight: bold; margin-top: 4px; }
+  /* Main */
+  main {
+    position: relative; z-index: 2;
+    flex: 1; overflow-y: auto; overflow-x: hidden;
+    padding: 20px;
+  }
+  main::-webkit-scrollbar { width: 6px; }
+  main::-webkit-scrollbar-thumb { background: #00f3ff; border-radius: 3px; }
 
-.btn { display: block; width: 100%; padding: 14px; margin-top: 10px; border: none; border-radius: 10px; font-size: 1rem; font-weight: bold; cursor: pointer; }
-.btn-primary { background: linear-gradient(90deg, #0ff, #f0f); color: #000; }
-.btn-outline { background: transparent; border: 2px solid #444; color: #fff; }
-.btn-gold { background: #ffd700; color: #000; }
-.btn-danger { background: #ff3366; color: #fff; }
-.btn-small { width: auto; display: inline-block; padding: 10px 20px; font-size: 0.9rem; }
-.btn-row { display: flex; gap: 10px; margin-top: 12px; }
-.btn-row .btn { margin-top: 0; }
+  /* Hide radio inputs */
+  .nav-radio { display: none; }
 
-.form-group { margin-bottom: 15px; }
-label { display: block; margin-bottom: 5px; color: #0ff; font-weight: bold; font-size: 0.85rem; text-transform: uppercase; }
-input, textarea, select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #444; background: #111; color: #fff; font-size: 1rem; }
-textarea { min-height: 80px; resize: vertical; }
-.checkbox-row { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
-.checkbox-row input { width: auto; }
+  /* View system - CSS only navigation */
+  .view { display: none; animation: fadeIn 0.35s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
 
-.recipe-box { background: #1a1a2e; border: 1px solid #333; border-radius: 16px; padding: 20px; margin-bottom: 15px; }
-.recipe-name { font-size: 1.7rem; font-weight: bold; text-align: center; margin-bottom: 5px; }
-.recipe-creator { text-align: center; color: #ffd700; font-weight: bold; margin-bottom: 10px; }
-.badge { display: inline-block; background: rgba(0,255,255,0.15); color: #0ff; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; margin: 0 3px; border: 1px solid #0ff; }
-.price-tag { display: inline-block; background: rgba(255,215,0,0.15); color: #ffd700; padding: 5px 14px; border-radius: 20px; font-size: 1rem; font-weight: bold; margin: 0 3px; border: 1px solid #ffd700; }
-.counter { color: #888; font-size: 0.85rem; margin-top: 8px; text-align: center; }
-.ingredient-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #222; }
-.ingredient-row:last-child { border-bottom: none; }
-.qty { color: #0ff; font-weight: bold; }
-.notes-box { background: #111; border-left: 3px solid #ffd700; padding: 12px; margin: 12px 0; border-radius: 0 8px 8px 0; color: #ddd; font-style: italic; }
+  /* Show views based on checked radio */
+  #nav-home:checked ~ #view-home,
+  #nav-browse:checked ~ #view-browse,
+  #nav-inventory:checked ~ #view-inventory,
+  #nav-create:checked ~ #view-create,
+  #nav-recipe:checked ~ #view-recipe,
+  #nav-myrecipes:checked ~ #view-myrecipes { display: block; }
 
-.step-indicator { display: flex; gap: 5px; margin-bottom: 20px; justify-content: center; }
-.step-dot { width: 40px; height: 5px; background: #333; border-radius: 3px; }
-.step-dot.active { background: #0ff; }
-.step-dot.done { background: #0f0; }
+  /* Home */
+  .home-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 18px; max-width: 700px; margin: 30px auto;
+  }
+  .home-card {
+    display: block;
+    background: rgba(20,20,35,0.9);
+    border: 2px solid rgba(255,255,255,0.1);
+    border-radius: 24px; padding: 28px;
+    text-align: center; cursor: pointer;
+    transition: all 0.25s; text-decoration: none;
+    color: #fff;
+  }
+  .home-card:active {
+    transform: scale(0.98);
+    border-color: #00f3ff;
+    box-shadow: 0 0 25px rgba(0,243,255,0.2);
+  }
+  .home-icon { font-size: 3rem; margin-bottom: 10px; }
+  .home-title { font-size: 1.25rem; font-weight: 800; margin-bottom: 5px; }
+  .home-desc { font-size: 0.85rem; color: #aaa; }
+  @media (max-width: 500px) {
+    .home-grid { grid-template-columns: 1fr; margin: 20px auto; }
+    .home-card { display: flex; align-items: center; gap: 16px; padding: 18px 24px; text-align: left; min-height: 110px; }
+    .home-icon { margin-bottom: 0; font-size: 2.5rem; }
+  }
 
-.empty { text-align: center; padding: 40px; color: #888; }
-.empty-emoji { font-size: 4rem; opacity: 0.5; margin-bottom: 10px; }
+  /* Section headers */
+  .section-title { font-size: 1.7rem; font-weight: 900; margin-bottom: 6px; }
+  .section-sub { color: #aaa; margin-bottom: 18px; font-size: 1rem; }
 
-.add-form { background: #111; border: 1px solid #333; border-radius: 12px; padding: 15px; margin-bottom: 20px; display: none; }
-.add-form.show { display: block; }
+  /* Filters */
+  .filter-bar {
+    display: flex; gap: 8px; overflow-x: auto;
+    margin-bottom: 16px; padding-bottom: 8px;
+  }
+  .filter-btn {
+    padding: 8px 18px; border-radius: 50px;
+    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(255,255,255,0.05); color: #aaa;
+    font-weight: 700; cursor: pointer; white-space: nowrap;
+    font-size: 0.9rem; transition: all 0.2s;
+  }
+  .filter-btn.active {
+    background: linear-gradient(90deg, #00f3ff, #ff00aa);
+    color: #000; border-color: transparent;
+    box-shadow: 0 0 12px rgba(0,243,255,0.35);
+  }
 
-.export-box { width: 100%; min-height: 100px; background: #111; border: 1px solid #444; color: #0f0; font-family: monospace; padding: 10px; border-radius: 8px; margin: 10px 0; word-break: break-all; }
+  /* Cards */
+  .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px; }
+  .card {
+    background: rgba(20,20,35,0.9);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 18px; padding: 16px;
+    text-align: center; cursor: pointer;
+    transition: all 0.2s; position: relative;
+  }
+  .card:active {
+    transform: translateY(-4px);
+    box-shadow: 0 6px 25px rgba(0,243,255,0.12);
+    border-color: #00f3ff;
+  }
+  .card-title { font-weight: 800; font-size: 1rem; margin-bottom: 3px; }
+  .card-meta { font-size: 0.78rem; color: #888; }
+  .card-price { color: #ffd700; font-weight: 800; font-size: 1rem; margin-top: 5px; }
+  .card-counter { color: #888; font-size: 0.78rem; margin-top: 4px; }
+  .item-selected { border-color: #39ff14 !important; background: rgba(57,255,20,0.06) !important; }
+  .item-selected::after {
+    content: 'OK'; position: absolute; top: 6px; right: 10px;
+    color: #39ff14; font-weight: 900; font-size: 0.75rem;
+  }
+  .premium-tag { color: #ffd700; font-size: 0.75rem; font-weight: 700; margin-top: 4px; }
 
-#debug-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #000; color: #0f0; padding: 8px; font-family: monospace; font-size: 12px; max-height: 80px; overflow-y: auto; border-top: 2px solid #0f0; z-index: 9999; }
+  /* Buttons */
+  .btn {
+    display: block; width: 100%; padding: 14px 28px;
+    margin-top: 10px; border: none; border-radius: 14px;
+    font-size: 1rem; font-weight: 800; cursor: pointer;
+    transition: all 0.2s; text-transform: uppercase;
+    letter-spacing: 0.5px; color: #fff; font-family: inherit;
+  }
+  .btn-primary {
+    background: linear-gradient(90deg, #00f3ff, #ff00aa);
+    color: #000; box-shadow: 0 0 18px rgba(0,243,255,0.25);
+  }
+  .btn-primary:active { transform: scale(1.02); box-shadow: 0 0 28px rgba(0,243,255,0.4); }
+  .btn-gold { background: linear-gradient(90deg, #ffd700, #ffaa00); color: #000; }
+  .btn-outline {
+    background: transparent; border: 2px solid rgba(255,255,255,0.15);
+    color: #fff;
+  }
+  .btn-outline:active { border-color: #00f3ff; background: rgba(0,243,255,0.08); }
+  .btn-danger { background: #ff3366; color: #fff; }
+  .btn-small { width: auto; display: inline-block; padding: 10px 20px; font-size: 0.9rem; }
+  .btn-row { display: flex; gap: 10px; margin-top: 12px; }
+  .btn-row .btn { margin-top: 0; }
 
-@media print { header, .no-print, #debug-bar { display: none !important; } body { background: #fff; color: #000; } .recipe-box { border: 2px solid #000; } }
+  /* Forms */
+  .form-group { margin-bottom: 18px; }
+  label {
+    display: block; margin-bottom: 6px;
+    color: #00f3ff; font-weight: 700; font-size: 0.85rem;
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  input, textarea, select {
+    width: 100%; padding: 14px; border-radius: 12px;
+    background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.12);
+    color: #fff; font-size: 1.05rem; outline: none;
+  }
+  input:focus, textarea:focus, select:focus {
+    border-color: #00f3ff;
+    box-shadow: 0 0 12px rgba(0,243,255,0.15);
+  }
+  textarea { min-height: 90px; resize: vertical; }
+  .checkbox-row { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+  .checkbox-row input { width: auto; }
+
+  /* Recipe detail */
+  .recipe-hero {
+    background: rgba(20,20,35,0.9);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 24px; padding: 24px;
+    margin-bottom: 16px; text-align: center;
+    position: relative; overflow: hidden;
+  }
+  .recipe-hero::after {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, #00f3ff, #ff00aa, #ffd700);
+  }
+  .recipe-emoji { font-size: 4rem; margin-bottom: 10px; display: block; animation: float 3s ease-in-out infinite; }
+  @keyframes float { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-8px);} }
+  .recipe-name { font-size: 1.7rem; font-weight: 900; margin-bottom: 5px; }
+  .recipe-creator { color: #ffd700; font-weight: 700; font-size: 1rem; margin-bottom: 12px; }
+  .recipe-badges { margin-bottom: 10px; }
+  .badge {
+    display: inline-block; padding: 5px 14px; border-radius: 50px;
+    background: rgba(0,243,255,0.12); border: 1px solid #00f3ff;
+    color: #00f3ff; font-weight: 700; font-size: 0.8rem; margin: 0 3px 6px;
+  }
+  .price-badge {
+    display: inline-block; padding: 5px 14px; border-radius: 50px;
+    background: rgba(255,215,0,0.15); border: 1px solid #ffd700;
+    color: #ffd700; font-weight: 800; font-size: 1rem; margin: 0 3px 6px;
+  }
+  .print-counter { color: #888; font-size: 0.85rem; margin: 8px 0; }
+  .ingredient-list {
+    background: rgba(0,0,0,0.25); border-radius: 14px;
+    padding: 16px; margin: 14px 0; text-align: left;
+  }
+  .ingredient-row {
+    display: flex; justify-content: space-between;
+    padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05);
+    font-size: 1rem;
+  }
+  .ingredient-row:last-child { border-bottom: none; }
+  .qty { color: #00f3ff; font-weight: 800; }
+  .notes-box {
+    background: rgba(0,0,0,0.3); border-left: 3px solid #ffd700;
+    padding: 12px; margin: 12px 0; border-radius: 0 8px 8px 0;
+    color: #ddd; font-style: italic; text-align: left;
+  }
+
+  /* Steps */
+  .step-indicator { display: flex; gap: 6px; margin-bottom: 20px; justify-content: center; }
+  .step-dot { width: 40px; height: 5px; border-radius: 3px; background: rgba(255,255,255,0.08); transition: all 0.3s; }
+  .step-dot.active { background: #00f3ff; box-shadow: 0 0 8px #00f3ff; }
+  .step-dot.done { background: #39ff14; }
+
+  /* Add form */
+  .add-form {
+    background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 14px; padding: 18px; margin-bottom: 20px; display: none;
+  }
+  .add-form.show { display: block; }
+
+  /* Export */
+  .export-box {
+    width: 100%; min-height: 120px; background: rgba(0,0,0,0.4);
+    border: 1px solid rgba(255,255,255,0.15); border-radius: 12px;
+    color: #39ff14; font-family: monospace; font-size: 0.85rem;
+    padding: 12px; margin: 12px 0; word-break: break-all;
+  }
+
+  /* Empty state */
+  .empty { text-align: center; padding: 50px 20px; color: #888; }
+  .empty-emoji { font-size: 4rem; margin-bottom: 14px; opacity: 0.5; }
+
+  /* Print */
+  @media print {
+    header, .no-print, .bg, .bubble { display: none !important; }
+    body { background: #fff; color: #000; overflow: visible; }
+    #app { height: auto; }
+    main { overflow: visible; padding: 0; }
+    .recipe-hero { border: 2px solid #000; box-shadow: none; page-break-inside: avoid; }
+    .view { display: none !important; }
+    #view-recipe.view { display: block !important; }
+  }
 </style>
-<base target="_blank">
 </head>
 <body>
+<div class="bg" id="bgAnim"></div>
+
 <div id="app">
   <header>
     <div class="logo">MIDTOWN MIXOLOGY</div>
-    <button class="nav-btn no-print" onclick="goHome()">Home</button>
+    <label for="nav-home" class="nav-btn no-print">Home</label>
   </header>
+
   <main>
-    <div id="view-home" class="view active">
-      <h1 style="text-align:center;">What are we making tonight?</h1>
-      <p class="sub" style="text-align:center;">Tap an option to get started</p>
+    <!-- Hidden radio buttons for CSS navigation -->
+    <input type="radio" name="view" id="nav-home" class="nav-radio" checked>
+    <input type="radio" name="view" id="nav-browse" class="nav-radio">
+    <input type="radio" name="view" id="nav-inventory" class="nav-radio">
+    <input type="radio" name="view" id="nav-create" class="nav-radio">
+    <input type="radio" name="view" id="nav-recipe" class="nav-radio">
+    <input type="radio" name="view" id="nav-myrecipes" class="nav-radio">
+
+    <!-- HOME -->
+    <div id="view-home" class="view">
+      <div style="text-align:center; margin-top: 16px;">
+        <h1 style="font-size: 1.9rem; margin-bottom: 6px;">What are we making tonight?</h1>
+        <p class="section-sub" style="text-align:center;">Tap an option to get started</p>
+      </div>
       <div class="home-grid">
-        <button class="home-card" onclick="btnBrowse()" ontouchstart="btnBrowse()">
-          <div class="home-icon">[MENU]</div>
-          <div class="home-title">Browse Menu</div>
-          <div class="home-desc">Signature drinks & shots</div>
-        </button>
-        <button class="home-card" onclick="btnInventory()" ontouchstart="btnInventory()">
-          <div class="home-icon">[INV]</div>
-          <div class="home-title">Our Inventory</div>
-          <div class="home-desc">Spirits, mixers & more</div>
-        </button>
-        <button class="home-card" onclick="btnCreate()" ontouchstart="btnCreate()">
-          <div class="home-icon">[LAB]</div>
-          <div class="home-title">Create Your Own</div>
-          <div class="home-desc">Build a custom drink</div>
-        </button>
-        <button class="home-card" onclick="btnSaved()" ontouchstart="btnSaved()">
-          <div class="home-icon">[SAVE]</div>
-          <div class="home-title">My Recipes</div>
-          <div class="home-desc">Saved this session</div>
-        </button>
+        <label for="nav-browse" class="home-card">
+          <div class="home-icon">MENU</div>
+          <div>
+            <div class="home-title">Browse Menu</div>
+            <div class="home-desc">Signature drinks & shots</div>
+          </div>
+        </label>
+        <label for="nav-inventory" class="home-card">
+          <div class="home-icon">INV</div>
+          <div>
+            <div class="home-title">Our Inventory</div>
+            <div class="home-desc">Spirits, mixers & more</div>
+          </div>
+        </label>
+        <label for="nav-create" class="home-card" onclick="startCreate()">
+          <div class="home-icon">LAB</div>
+          <div>
+            <div class="home-title">Create Your Own</div>
+            <div class="home-desc">Build a custom drink</div>
+          </div>
+        </label>
+        <label for="nav-myrecipes" class="home-card">
+          <div class="home-icon">SAVE</div>
+          <div>
+            <div class="home-title">My Recipes</div>
+            <div class="home-desc">Saved this session</div>
+          </div>
+        </label>
       </div>
     </div>
-    <div id="view-browse" class="view"><h2>Drink Menu</h2><p class="sub">Tap any drink to see recipe, price & print count</p><div class="filter-bar" id="browseFilters"></div><div id="browseGrid"></div></div>
-    <div id="view-inventory" class="view"><h2>Inventory</h2><p class="sub">Everything behind our bar. Tap + to add items.</p><div class="no-print" style="margin-bottom: 15px;"><button class="btn btn-outline btn-small" onclick="toggleAddForm()">+ Add Item</button></div><div class="add-form" id="addForm"><div class="form-group"><label>Item Name</label><input type="text" id="newItemName" placeholder="e.g., Grey Goose"></div><div class="form-group"><label>Category</label><input type="text" id="newItemCat" placeholder="e.g., Vodka"></div><div class="form-group"><label>Default Amount</label><input type="text" id="newItemQty" placeholder="e.g., 1.5 oz" value="1.5 oz"></div><div class="checkbox-row"><input type="checkbox" id="newItemPremium"><label style="margin:0;text-transform:none;">Premium (+$2.00 upgrade)</label></div><div class="btn-row"><button class="btn btn-primary" onclick="addInventoryItem()">Add to Inventory</button><button class="btn btn-outline" onclick="toggleAddForm()">Cancel</button></div></div><div class="filter-bar" id="invFilters"></div><div id="invGrid"></div></div>
-    <div id="view-create" class="view"><h2 id="createTitle">Drink Lab</h2><p class="sub">Craft your masterpiece</p><div class="step-indicator" id="stepIndicator"><div class="step-dot active"></div><div class="step-dot"></div><div class="step-dot"></div><div class="step-dot"></div></div><div id="create-step-1"><div class="form-group"><label>Drink Name</label><input type="text" id="createName" placeholder="e.g., The Midnight Spark"></div><div class="form-group"><label>Created By</label><input type="text" id="createCreator" placeholder="e.g., Alex"></div><div class="form-group"><label>Type</label><select id="createType"><option>Cocktail</option><option>Shot</option><option>Mocktail</option><option>Special</option></select></div><button class="btn btn-primary" onclick="nextStep(2)">Next: Pick Ingredients</button></div><div id="create-step-2" style="display:none;"><div class="filter-bar" id="createFilters"></div><div style="margin-bottom: 10px; color: #0f0; font-weight: bold;">Selected: <span id="selectedCount">0</span></div><div id="createGrid"></div><div class="btn-row"><button class="btn btn-outline" onclick="prevStep(1)">Back</button><button class="btn btn-primary" onclick="nextStep(3)">Next: Details</button></div></div><div id="create-step-3" style="display:none;"><div id="selectedReview"></div><div class="form-group" style="margin-top: 15px;"><label>Glass Type</label><select id="createGlass"><option>Rocks Glass</option><option>Collins Glass</option><option>Martini Glass</option><option>Shot Glass</option><option>Mug</option><option>Other</option></select></div><div class="form-group"><label>Instructions / Build Order</label><textarea id="createInstructions" placeholder="1. Fill shaker with ice...&#10;2. Add vodka and...&#10;3. Shake and strain into..."></textarea></div><div class="form-group"><label>Bartender Notes</label><textarea id="createNotes" placeholder="Special instructions for the bartender..."></textarea></div><div class="btn-row"><button class="btn btn-outline" onclick="prevStep(2)">Back</button><button class="btn btn-primary" onclick="nextStep(4)">Next: Preview</button></div></div><div id="create-step-4" style="display:none;"><div id="createPreview"></div><div class="btn-row"><button class="btn btn-outline" onclick="prevStep(3)">Edit</button><button class="btn btn-gold" onclick="saveCreation()">Save Recipe</button></div></div></div>
-    <div id="view-recipe" class="view"><div id="recipeContent"></div><div class="no-print" id="recipeActions" style="margin-top: 15px;"></div></div>
-    <div id="view-myrecipes" class="view"><h2>My Creations</h2><p class="sub">Saved during this session. Export before closing.</p><div id="myRecipesList"></div></div>
+
+    <!-- BROWSE -->
+    <div id="view-browse" class="view">
+      <div class="section-title">Drink Menu</div>
+      <div class="section-sub">Tap any drink to see recipe, price & print count</div>
+      <div class="filter-bar" id="browseFilters"></div>
+      <div class="card-grid" id="browseGrid"></div>
+    </div>
+
+    <!-- INVENTORY -->
+    <div id="view-inventory" class="view">
+      <div class="section-title">Inventory</div>
+      <div class="section-sub">Everything behind our bar. Tap + to add items.</div>
+      <div class="no-print" style="margin-bottom: 15px;">
+        <button class="btn btn-outline btn-small" onclick="toggleAddForm()">+ Add Item</button>
+      </div>
+      <div class="add-form" id="addForm">
+        <div class="form-group"><label>Item Name</label><input type="text" id="newItemName" placeholder="e.g., Grey Goose"></div>
+        <div class="form-group"><label>Category</label><input type="text" id="newItemCat" placeholder="e.g., Vodka"></div>
+        <div class="form-group"><label>Default Amount</label><input type="text" id="newItemQty" placeholder="e.g., 1.5 oz" value="1.5 oz"></div>
+        <div class="checkbox-row"><input type="checkbox" id="newItemPremium"><label style="margin:0;text-transform:none;">Premium (+$2.00 upgrade)</label></div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="addInventoryItem()">Add to Inventory</button>
+          <button class="btn btn-outline" onclick="toggleAddForm()">Cancel</button>
+        </div>
+      </div>
+      <div class="filter-bar" id="invFilters"></div>
+      <div class="card-grid" id="invGrid"></div>
+    </div>
+
+    <!-- CREATE / EDIT -->
+    <div id="view-create" class="view">
+      <div class="section-title" id="createTitle">Drink Lab</div>
+      <div class="section-sub">Craft your masterpiece</div>
+      <div class="step-indicator" id="stepIndicator">
+        <div class="step-dot active"></div>
+        <div class="step-dot"></div>
+        <div class="step-dot"></div>
+        <div class="step-dot"></div>
+      </div>
+
+      <div id="create-step-1">
+        <div class="form-group"><label>Drink Name</label><input type="text" id="createName" placeholder="e.g., The Midnight Spark"></div>
+        <div class="form-group"><label>Created By (Your Name)</label><input type="text" id="createCreator" placeholder="e.g., Alex"></div>
+        <div class="form-group"><label>Type</label><select id="createType"><option>Cocktail</option><option>Shot</option><option>Mocktail</option><option>Special</option></select></div>
+        <button class="btn btn-primary" onclick="nextStep(2)">Next: Pick Ingredients</button>
+      </div>
+
+      <div id="create-step-2" style="display:none;">
+        <div class="filter-bar" id="createFilters"></div>
+        <div style="margin-bottom: 10px; color: #39ff14; font-weight: 800;">Selected: <span id="selectedCount">0</span> items</div>
+        <div class="card-grid" id="createGrid"></div>
+        <div class="btn-row">
+          <button class="btn btn-outline" onclick="prevStep(1)">Back</button>
+          <button class="btn btn-primary" onclick="nextStep(3)">Next: Details</button>
+        </div>
+      </div>
+
+      <div id="create-step-3" style="display:none;">
+        <div id="selectedReview"></div>
+        <div class="form-group" style="margin-top: 15px;"><label>Glass Type</label><select id="createGlass"><option>Rocks Glass</option><option>Collins Glass</option><option>Martini Glass</option><option>Shot Glass</option><option>Mug</option><option>Other</option></select></div>
+        <div class="form-group"><label>Instructions / Build Order</label><textarea id="createInstructions" placeholder="1. Fill shaker with ice...&#10;2. Add vodka and...&#10;3. Shake and strain into..."></textarea></div>
+        <div class="form-group"><label>Bartender Notes</label><textarea id="createNotes" placeholder="Special instructions for the bartender..."></textarea></div>
+        <div class="btn-row">
+          <button class="btn btn-outline" onclick="prevStep(2)">Back</button>
+          <button class="btn btn-primary" onclick="nextStep(4)">Next: Preview</button>
+        </div>
+      </div>
+
+      <div id="create-step-4" style="display:none;">
+        <div id="createPreview"></div>
+        <div class="btn-row">
+          <button class="btn btn-outline" onclick="prevStep(3)">Edit</button>
+          <button class="btn btn-gold" onclick="saveCreation()">Save Recipe</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RECIPE DETAIL -->
+    <div id="view-recipe" class="view">
+      <div id="recipeContent"></div>
+      <div class="no-print" id="recipeActions" style="margin-top: 15px;"></div>
+    </div>
+
+    <!-- MY RECIPES -->
+    <div id="view-myrecipes" class="view">
+      <div class="section-title">My Creations</div>
+      <div class="section-sub">Saved during this session. Export before closing.</div>
+      <div id="myRecipesList"></div>
+    </div>
   </main>
 </div>
-<div id="debug-bar">Loading...</div>
 
 <script>
-function log(msg) {
-  var d = document.getElementById('debug-bar');
-  if (d) d.innerHTML = d.innerHTML + '<br>' + msg;
-}
-
-log('SCRIPT START');
-
+// ================= DATA =================
 var INVENTORY = [
   {id:'vod1',name:"Tito's Vodka",category:'Vodka',premium:false,defaultQty:'1.5 oz'},
   {id:'vod2',name:'Ketel One',category:'Vodka',premium:true,defaultQty:'1.5 oz'},
@@ -180,17 +485,16 @@ var DEFAULT_DRINKS = [
   {id:'d8',name:'Apple Pie Shot',creator:'House',type:'Shot',glass:'Shot Glass',instructions:'Shake whiskey and sour apple pucker with ice. Strain. Top with whipped cream.',notes:'',ingredients:[{id:'whi2',qty:'1 oz'},{id:'liq4',qty:'1 oz'},{id:'ext2',qty:'dollop'}],printCount:0}
 ];
 
+// ================= STATE =================
 var currentStep = 1;
 var selectedIngredients = {};
 var lastView = 'home';
 var allDrinks = [];
 var myRecipes = [];
 var editModeId = null;
-var isVariation = false;
 var currentRecipeId = null;
 
-log('VARS OK');
-
+// ================= HELPERS =================
 function getInv(id) {
   for (var i = 0; i < INVENTORY.length; i++) if (INVENTORY[i].id === id) return INVENTORY[i];
   return null;
@@ -218,29 +522,36 @@ function calcPrice(ingredients) {
 function formatPrice(p) { return '$' + p.toFixed(2); }
 function clone(obj) { return JSON.parse(JSON.stringify(obj)); }
 
-log('HELPERS OK');
-
+// ================= NAVIGATION (JS fallback) =================
 function showView(name) {
-  log('CLICK: showView(' + name + ')');
-  var views = document.getElementsByClassName('view');
-  log('Found ' + views.length + ' views');
-  for (var i = 0; i < views.length; i++) views[i].classList.remove('active');
-  var t = document.getElementById('view-' + name);
-  log('Target element: ' + (t ? 'FOUND' : 'NOT FOUND'));
-  if (t) t.classList.add('active');
+  document.getElementById('nav-' + name).checked = true;
   if (name !== 'recipe') lastView = name;
   if (name === 'myrecipes') renderMyRecipes();
-  log('showView done');
+  window.scrollTo(0, 0);
 }
 function goHome() { showView('home'); }
 
-function btnBrowse() { log('BTN: Browse clicked'); showView('browse'); }
-function btnInventory() { log('BTN: Inventory clicked'); showView('inventory'); }
-function btnCreate() { log('BTN: Create clicked'); startCreate(); }
-function btnSaved() { log('BTN: Saved clicked'); showView('myrecipes'); }
+// ================= INIT =================
+function init() {
+  var bg = document.getElementById('bgAnim');
+  for (var i = 0; i < 12; i++) {
+    var b = document.createElement('div');
+    b.className = 'bubble';
+    b.style.left = Math.random() * 100 + '%';
+    b.style.width = b.style.height = (8 + Math.random() * 24) + 'px';
+    b.style.animationDuration = (7 + Math.random() * 9) + 's';
+    b.style.animationDelay = (Math.random() * 6) + 's';
+    bg.appendChild(b);
+  }
+  allDrinks = clone(DEFAULT_DRINKS);
+  myRecipes = [];
+  renderBrowseFilters();
+  renderBrowse('All');
+  renderInvFilters();
+  renderInventory('All');
+}
 
-log('NAV OK');
-
+// ================= BROWSE =================
 function renderBrowseFilters() {
   var cats = ['All','Cocktail','Shot','Mocktail','Special'];
   var bar = document.getElementById('browseFilters');
@@ -264,19 +575,20 @@ function renderBrowse(filter) {
   for (var i = 0; i < allDrinks.length; i++) {
     if (filter === 'All' || allDrinks[i].type === filter) items.push(allDrinks[i]);
   }
-  if (items.length === 0) { grid.innerHTML = '<div class="empty"><div class="empty-emoji">[DRINK]</div><h3>No drinks found</h3></div>'; return; }
+  if (items.length === 0) { grid.innerHTML = '<div class="empty"><div class="empty-emoji">DRINK</div><h3>No drinks found</h3></div>'; return; }
   var html = '';
   for (var i = 0; i < items.length; i++) {
     var d = items[i];
     var price = calcPrice(d.ingredients);
     var pc = d.printCount || 0;
     html += '<div class="card" onclick="openRecipe('' + d.id + '')"><div class="card-title">' + d.name + '</div><div class="card-meta">' + d.type + ' - ' + d.glass + '</div><div class="card-price">' + formatPrice(price) + '</div>';
-    if (pc > 0) html += '<div class="counter">Printed ' + pc + ' times</div>';
+    if (pc > 0) html += '<div class="card-counter">Printed ' + pc + ' times</div>';
     html += '</div>';
   }
   grid.innerHTML = html;
 }
 
+// ================= INVENTORY =================
 function toggleAddForm() {
   var f = document.getElementById('addForm');
   if (f.classList.contains('show')) f.classList.remove('show');
@@ -307,7 +619,7 @@ function renderInventory(filter) {
     var it = INVENTORY[i];
     if (filter !== 'All' && it.category !== filter) continue;
     html += '<div class="card"><div class="card-title">' + it.name + '</div><div class="card-meta">' + it.category;
-    if (it.premium) html += ' - <span style="color:#ffd700;font-weight:bold;">PREMIUM</span>';
+    if (it.premium) html += ' - <span style="color:#ffd700;font-weight:800;">PREMIUM</span>';
     html += '</div><div class="card-meta">Default: ' + it.defaultQty + '</div></div>';
   }
   grid.innerHTML = html;
@@ -330,12 +642,9 @@ function addInventoryItem() {
   alert(name + ' added to inventory!');
 }
 
-log('RENDER OK');
-
+// ================= CREATE / EDIT =================
 function startCreate() {
-  log('startCreate called');
   editModeId = null;
-  isVariation = false;
   selectedIngredients = {};
   currentStep = 1;
   document.getElementById('createTitle').textContent = 'Drink Lab';
@@ -347,13 +656,11 @@ function startCreate() {
   document.getElementById('createNotes').value = '';
   updateStepIndicator();
   showStep(1);
-  showView('create');
 }
 function startEdit(id) {
   var d = getDrink(id);
   if (!d) return;
   editModeId = id;
-  isVariation = false;
   selectedIngredients = {};
   for (var i = 0; i < d.ingredients.length; i++) selectedIngredients[d.ingredients[i].id] = true;
   currentStep = 1;
@@ -372,7 +679,6 @@ function startVariation(id) {
   var d = getDrink(id);
   if (!d) return;
   editModeId = null;
-  isVariation = true;
   selectedIngredients = {};
   for (var i = 0; i < d.ingredients.length; i++) selectedIngredients[d.ingredients[i].id] = true;
   currentStep = 1;
@@ -445,7 +751,7 @@ function renderCreateGrid(filter) {
     if (filter !== 'All' && it.category !== filter) continue;
     var sel = selectedIngredients[it.id];
     html += '<div class="card ' + (sel ? 'item-selected' : '') + '" onclick="toggleIngredient('' + it.id + '')" style="position:relative;"><div class="card-title">' + it.name + '</div><div class="card-meta">' + it.category + '</div>';
-    if (it.premium) html += '<div class="premium-tag">* PREMIUM</div>';
+    if (it.premium) html += '<div class="premium-tag">* PREMIUM (+$2)</div>';
     html += '</div>';
   }
   grid.innerHTML = html;
@@ -473,7 +779,7 @@ function renderSelectedReview() {
     if (it.premium) html += ' <span style="color:#ffd700;">(* Premium)</span>';
     html += '</span><span class="qty">' + it.defaultQty + '</span></div>';
   }
-  container.innerHTML = '<div style="background:rgba(0,0,0,0.3);border-radius:12px;padding:14px;margin-bottom:14px;"><h3 style="margin-top:0;color:#0ff;font-size:1.1rem;">Selected Ingredients</h3>' + (html || '<div style="color:#888">None selected</div>') + '</div>';
+  container.innerHTML = '<div style="background:rgba(0,0,0,0.3);border-radius:12px;padding:14px;margin-bottom:14px;"><h3 style="margin-top:0;color:#00f3ff;font-size:1.1rem;">Selected Ingredients</h3>' + (html || '<div style="color:#888">None selected</div>') + '</div>';
 }
 function renderPreview() {
   var name = document.getElementById('createName').value;
@@ -493,7 +799,7 @@ function renderPreview() {
   }
   var price = calcPrice(ingredients);
   var notesHtml = notes ? '<div class="notes-box">NOTES: ' + notes + '</div>' : '';
-  document.getElementById('createPreview').innerHTML = '<div class="recipe-box"><div class="recipe-name">' + name + '</div><div class="recipe-creator">Created by ' + creator + '</div><div style="text-align:center;"><span class="badge">' + type + '</span><span class="badge">' + glass + '</span><span class="price-tag">' + formatPrice(price) + '</span></div><div class="ingredient-list" style="background:rgba(0,0,0,0.3);border-radius:12px;padding:14px;margin:14px 0;">' + ingRows + '</div><div style="text-align:left;white-space:pre-wrap;font-size:1rem;line-height:1.5;">' + instructions + '</div>' + notesHtml + '</div>';
+  document.getElementById('createPreview').innerHTML = '<div class="recipe-hero"><div class="recipe-name">' + name + '</div><div class="recipe-creator">Created by ' + creator + '</div><div class="recipe-badges"><span class="badge">' + type + '</span><span class="badge">' + glass + '</span><span class="price-badge">' + formatPrice(price) + '</span></div><div class="ingredient-list">' + ingRows + '</div><div style="text-align:left;white-space:pre-wrap;font-size:1rem;line-height:1.5;">' + instructions + '</div>' + notesHtml + '</div>';
 }
 function saveCreation() {
   var name = document.getElementById('createName').value.trim();
@@ -529,15 +835,12 @@ function saveCreation() {
     alert(name + ' by ' + creator + ' saved!');
   }
   editModeId = null;
-  isVariation = false;
   renderBrowse('All');
   showView('browse');
 }
 
-log('CREATE OK');
-
+// ================= RECIPE =================
 function openRecipe(id) {
-  log('CLICK: openRecipe(' + id + ')');
   currentRecipeId = id;
   var d = getDrink(id);
   if (!d) return;
@@ -550,10 +853,10 @@ function openRecipe(id) {
     ingRows += '<div class="ingredient-row"><span>' + name + '</span><span class="qty">' + d.ingredients[i].qty + '</span></div>';
   }
   var notesHtml = d.notes ? '<div class="notes-box">BARTENDER NOTES: ' + d.notes + '</div>' : '';
-  document.getElementById('recipeContent').innerHTML = '<div class="recipe-box"><div class="recipe-name">' + d.name + '</div><div class="recipe-creator">' + (d.isCustom ? 'Crafted by ' : 'House Recipe - ') + d.creator + '</div><div style="text-align:center;"><span class="badge">' + d.type + '</span><span class="badge">' + d.glass + '</span><span class="price-tag">' + formatPrice(price) + '</span></div><div class="counter">Printed ' + pc + ' times</div><div class="ingredient-list" style="background:rgba(0,0,0,0.3);border-radius:12px;padding:14px;margin:14px 0;">' + ingRows + '</div><div style="text-align:left;white-space:pre-wrap;font-size:1.05rem;line-height:1.6;">' + d.instructions + '</div>' + notesHtml + '</div>';
+  document.getElementById('recipeContent').innerHTML = '<div class="recipe-hero"><div class="recipe-name">' + d.name + '</div><div class="recipe-creator">' + (d.isCustom ? 'Crafted by ' : 'House Recipe - ') + d.creator + '</div><div class="recipe-badges"><span class="badge">' + d.type + '</span><span class="badge">' + d.glass + '</span><span class="price-badge">' + formatPrice(price) + '</span></div><div class="print-counter">Printed ' + pc + ' times</div><div class="ingredient-list">' + ingRows + '</div><div style="text-align:left;white-space:pre-wrap;font-size:1.05rem;line-height:1.6;">' + d.instructions + '</div>' + notesHtml + '</div>';
 
   var actions = '<div class="btn-row"><button class="btn btn-primary" onclick="printRecipe()">Print Ticket (' + formatPrice(price) + ')</button></div>';
-  actions += '<div class="btn-row"><button class="btn btn-outline btn-small" onclick="startEdit('' + d.id + '')">Edit</button><button class="btn btn-outline btn-small" onclick="startVariation('' + d.id + '')">Make Variation</button></div>';
+  actions += '<div class="btn-row"><button class="btn btn-outline btn-small" onclick="startEdit('' + d.id + '')">Edit / Rename</button><button class="btn btn-outline btn-small" onclick="startVariation('' + d.id + '')">Make Variation</button></div>';
   if (d.isCustom) actions += '<div class="btn-row"><button class="btn btn-danger btn-small" onclick="deleteRecipe('' + d.id + '')">Delete</button></div>';
   actions += '<div class="btn-row"><button class="btn btn-outline" onclick="showView(lastView)">Back</button></div>';
   document.getElementById('recipeActions').innerHTML = actions;
@@ -577,13 +880,12 @@ function deleteRecipe(id) {
   showView('myrecipes');
 }
 
-log('RECIPE OK');
-
+// ================= MY RECIPES =================
 function renderMyRecipes() {
   var container = document.getElementById('myRecipesList');
   if (!container) return;
   if (myRecipes.length === 0) {
-    container.innerHTML = '<div class="empty"><div class="empty-emoji">[EMPTY]</div><h3>No creations yet</h3><p>Go to "Create Your Own" to make one!</p><button class="btn btn-primary" style="max-width:300px;margin:15px auto 0;" onclick="startCreate()">Create Now</button></div>';
+    container.innerHTML = '<div class="empty"><div class="empty-emoji">EMPTY</div><h3>No creations yet</h3><p>Go to "Create Your Own" to make one!</p><button class="btn btn-primary" style="max-width:300px;margin:15px auto 0;" onclick="startCreate();showView('create');">Create Now</button></div>';
     return;
   }
   var cards = '';
@@ -613,7 +915,7 @@ function renderMyRecipes() {
 /g, ' ') + (d.notes ? '
    Notes: ' + d.notes : '');
   }
-  container.innerHTML = '<div>' + cards + '</div><div style="margin-top:20px;background:#1a1a2e;border:1px solid #333;border-radius:16px;padding:18px;"><h3 style="margin-top:0;color:#ffd700;font-size:1.1rem;">Export Recipes</h3><p style="color:#888;font-size:0.9rem;">Copy this before closing the page. Recipes are NOT saved after you close.</p><textarea class="export-box" readonly onclick="this.select()">' + exportText + '</textarea><button class="btn btn-outline btn-small" style="margin-top:8px;width:auto;display:inline-block;" onclick="downloadRecipes()">Download as File</button><button class="btn btn-danger btn-small" style="margin-top:10px;width:auto;display:inline-block;" onclick="clearMyRecipes()">Clear All</button></div>';
+  container.innerHTML = '<div class="card-grid">' + cards + '</div><div style="margin-top:20px;background:rgba(20,20,35,0.9);border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:18px;"><h3 style="margin-top:0;color:#ffd700;font-size:1.1rem;">Export Recipes</h3><p style="color:#888;font-size:0.9rem;">Copy this before closing the page. Recipes are NOT saved after you close.</p><textarea class="export-box" readonly onclick="this.select()">' + exportText + '</textarea><button class="btn btn-outline btn-small" style="margin-top:8px;width:auto;display:inline-block;" onclick="downloadRecipes()">Download as File</button><button class="btn btn-danger btn-small" style="margin-top:10px;width:auto;display:inline-block;" onclick="clearMyRecipes()">Clear All</button></div>';
 }
 function downloadRecipes() {
   var exportText = '';
@@ -658,21 +960,8 @@ function clearMyRecipes() {
   renderBrowse('All');
 }
 
-log('MYRECIPES OK');
-
-function init() {
-  log('INIT started');
-  allDrinks = clone(DEFAULT_DRINKS);
-  myRecipes = [];
-  renderBrowseFilters();
-  renderBrowse('All');
-  renderInvFilters();
-  renderInventory('All');
-  log('INIT done');
-}
-
+// Start
 init();
-log('=== APP READY ===');
 </script>
 </body>
 </html>
