@@ -1,1 +1,445 @@
-index.html
+
+
+
+
+
+
+
+
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BarShift v6.0 (Payroll Ready)</title>
+    <style>
+        /* CSS - Dark Theme */
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #121212;
+            color: #e0e0e0;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 450px;
+            background-color: #1e1e1e;
+            padding: 15px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.8);
+            min-height: 100vh; 
+        }
+
+        h1, h2, h3 { color: #f5a623; margin-top: 0; text-align: center; }
+        
+        .screen { display: none; }
+        .active { display: block; }
+
+        /* Navigation */
+        .nav-tabs { display: flex; gap: 5px; margin-bottom: 15px; border-bottom: 1px solid #333; padding-bottom: 10px; overflow-x: auto;}
+        .nav-btn { flex: 1; background: #333; color: #aaa; padding: 10px; border: none; cursor: pointer; border-radius: 4px; white-space: nowrap; }
+        .nav-btn.active-tab { background: #f5a623; color: black; font-weight: bold; }
+
+        /* Cards & Tables */
+        .card { background-color: #252525; padding: 15px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #333; }
+        
+        table { width: 100%; border-collapse: collapse; font-size: 0.85em; }
+        th { text-align: left; color: #888; border-bottom: 1px solid #555; padding: 5px; }
+        td { padding: 8px 5px; border-bottom: 1px solid #333; vertical-align: top;}
+        .time-detail { font-size: 0.8em; color: #888; display: block; }
+        
+        /* Inputs & Buttons */
+        input, select { width: 100%; padding: 10px; margin: 5px 0; background: #333; border: 1px solid #444; color: white; border-radius: 4px; box-sizing: border-box; }
+        button { width: 100%; padding: 10px; margin-top: 5px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .btn-gold { background-color: #f5a623; color: black; }
+        .btn-red { background-color: #d32f2f; color: white; }
+        .btn-blue { background-color: #1976d2; color: white; }
+        .btn-green { background-color: #388e3c; color: white; }
+        .btn-small { width: auto; padding: 5px 10px; font-size: 0.8em; }
+
+        /* Lists */
+        .list-item { background: #333; padding: 10px; margin-bottom: 5px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; }
+        .role-badge { font-size: 0.7em; padding: 2px 5px; border-radius: 3px; background: #555; color: white; margin-left: 5px; text-transform: uppercase; }
+        .logout-btn { position: absolute; top: 10px; right: 10px; background: none; color: #666; width: auto; padding: 0; font-size: 0.8em; }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+
+    <div id="login-screen" class="screen active">
+        <h1 style="margin-top: 50px;">BarShift</h1>
+        <div class="card" style="text-align: center;">
+            <p style="color:#aaa;">Enter Passcode</p>
+            <input type="password" id="pin-input" placeholder="____" style="text-align:center; font-size:24px; letter-spacing: 5px; width: 60%; margin: 0 auto; display:block;">
+            <button class="btn-gold" style="margin-top: 20px;" onclick="login()">Login</button>
+            <p style="font-size:0.8em; color:#555;">(Default Manager: 9999)</p>
+        </div>
+    </div>
+
+    <div id="main-dashboard" class="screen">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h2 id="user-name-display" style="text-align:left; font-size:1.2em;">User</h2>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+
+        <div class="nav-tabs" id="nav-container"></div>
+
+        <div id="tab-schedule" class="tab-content">
+            <div class="card">
+                <h3>My Upcoming Shifts</h3>
+                <div id="my-shifts-list"></div>
+            </div>
+            <div class="card">
+                <h3>Open Shifts (Coverage Needed)</h3>
+                <div id="open-shifts-list"></div>
+            </div>
+        </div>
+
+        <div id="tab-clock" class="tab-content" style="display:none;">
+            <div class="card" style="text-align:center; padding: 40px 20px;">
+                <h1 id="clock-timer" style="font-size: 3em; margin-bottom: 20px;">00:00:00</h1>
+                <p id="clock-start-time" style="color:#888; font-size:0.9em; min-height: 20px;"></p>
+                <button id="clock-btn" class="btn-gold" style="padding: 20px; font-size: 1.2em;" onclick="toggleClock()">CLOCK IN</button>
+            </div>
+            
+            <div class="card">
+                <h3>My Time Card</h3>
+                <p style="text-align:center; font-size:0.8em; color:#888;">Hours rounded to nearest 15m (0.25)</p>
+                <table id="my-timecard-table">
+                    <thead><tr><th>Date</th><th>In / Out</th><th>Hrs</th><th>Pay</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="tab-supplies" class="tab-content" style="display:none;">
+            <div class="card">
+                <h3>Report Issue</h3>
+                <input type="text" id="supply-item" placeholder="Item Name">
+                <select id="supply-status"><option value="Low">Low Stock</option><option value="Gone">Gone</option></select>
+                <button class="btn-blue" onclick="reportSupply()">Report</button>
+            </div>
+            <div class="card"><h3>Active Reports</h3><div id="supply-list"></div></div>
+        </div>
+
+        <div id="tab-staff" class="tab-content" style="display:none;">
+            <div class="card">
+                <h3>Add New Employee</h3>
+                <input type="text" id="new-name" placeholder="Name">
+                <input type="text" id="new-pin" placeholder="Passcode (4 digits)">
+                <input type="number" id="new-rate" placeholder="Hourly Rate ($)">
+                <select id="new-role"><option value="staff">Staff</option><option value="manager">Manager</option></select>
+                <button class="btn-green" onclick="addEmployee()">Create User</button>
+            </div>
+            <div class="card"><h3>Manage Staff</h3><div id="staff-list"></div></div>
+        </div>
+
+        <div id="tab-manage-sched" class="tab-content" style="display:none;">
+            <div class="card">
+                <h3>Assign Shift</h3>
+                <select id="mgr-assign-staff"></select>
+                <input type="date" id="mgr-assign-date">
+                <div style="display:flex; gap:10px;"><input type="time" id="mgr-assign-start"><input type="time" id="mgr-assign-end"></div>
+                <select id="mgr-assign-role"><option value="Bartender">Bartender</option><option value="Backup">Backup Bartender</option><option value="Door">Door</option></select>
+                <button class="btn-blue" onclick="publishShift()">Publish Shift</button>
+            </div>
+            <div class="card"><h3>Master Schedule</h3><div id="master-schedule-list"></div></div>
+        </div>
+
+        <div id="tab-manage-time" class="tab-content" style="display:none;">
+            <div class="card">
+                <h3>Review Time Cards</h3>
+                <select id="mgr-time-user" onchange="renderAdminTimeCard()"><option value="">Select Employee...</option></select>
+                <div id="admin-timecard-view" style="margin-top:10px;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- DATA ---
+    let users = [
+        { id: 1, name: "Manager Dave", pin: "9999", role: "manager", rate: 25 },
+        { id: 2, name: "Mike", pin: "1111", role: "staff", rate: 15 },
+        { id: 3, name: "Sarah", pin: "2222", role: "staff", rate: 18 }
+    ];
+
+    let shifts = [ { id: 101, userId: 2, name: "Mike", date: "2023-10-27", start: "17:00", end: "02:00", shiftRole: "Bartender", status: "assigned" } ];
+    
+    // Time Punches now store start/end timestamps strings
+    let timePunches = [
+        { id: 1, userId: 2, date: "2023-10-25", start: "5:00 PM", end: "1:00 AM", hours: 8.0 }
+    ];
+
+    let supplies = [];
+
+    // --- STATE ---
+    let currentUser = null;
+    let clockTimer = null;
+    let shiftStartTime = null; // Date Object
+    let isClockedIn = false;
+
+    // --- LOGIN/NAV ---
+    function login() {
+        const pin = document.getElementById('pin-input').value;
+        const user = users.find(u => u.pin === pin);
+        if (user) {
+            currentUser = user;
+            document.getElementById('pin-input').value = "";
+            loadDashboard();
+            showScreen('main-dashboard');
+        } else { alert("Invalid PIN"); }
+    }
+
+    function logout() {
+        currentUser = null;
+        isClockedIn = false;
+        clearInterval(clockTimer);
+        shiftStartTime = null;
+        showScreen('login-screen');
+    }
+
+    function showScreen(id) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+    }
+
+    function loadDashboard() {
+        document.getElementById('user-name-display').innerText = currentUser.name;
+        const nav = document.getElementById('nav-container');
+        nav.innerHTML = "";
+        
+        // Build Tabs based on Role
+        const tabs = [
+            { text: "Schedule", id: "tab-schedule" },
+            { text: "Clock & Pay", id: "tab-clock" },
+            { text: "Supplies", id: "tab-supplies" }
+        ];
+        
+        if(currentUser.role === 'manager') {
+            tabs.push({ text: "M: Staff", id: "tab-staff" });
+            tabs.push({ text: "M: Sched", id: "tab-manage-sched" });
+            tabs.push({ text: "M: Time", id: "tab-manage-time" });
+        }
+
+        tabs.forEach((t, index) => {
+            const btn = document.createElement('button');
+            btn.className = `nav-btn ${index === 0 ? 'active-tab' : ''}`;
+            btn.innerText = t.text;
+            btn.onclick = () => openTab(t.id, btn);
+            nav.appendChild(btn);
+        });
+        
+        // Reset View
+        openTab(tabs[0].id, nav.children[0]);
+    }
+
+    function openTab(id, btn) {
+        document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+        document.getElementById(id).style.display = 'block';
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active-tab'));
+        btn.classList.add('active-tab');
+        
+        // Refresh Data
+        renderMySchedule();
+        renderMyTimeCard();
+        renderSupplies();
+        if(currentUser.role === 'manager') {
+            renderStaffList(); renderMasterSchedule(); populateUserSelects();
+        }
+    }
+
+    // --- CLOCK & ROUNDING LOGIC ---
+    function toggleClock() {
+        const btn = document.getElementById('clock-btn');
+        const timeDisplay = document.getElementById('clock-timer');
+        const startDisplay = document.getElementById('clock-start-time');
+
+        if(!isClockedIn) {
+            // CLOCK IN
+            isClockedIn = true;
+            shiftStartTime = new Date();
+            btn.innerText = "CLOCK OUT";
+            btn.className = "btn-red";
+            startDisplay.innerText = "Started at: " + formatTime(shiftStartTime);
+            
+            // Timer UI
+            clockTimer = setInterval(() => {
+                const now = new Date();
+                const diff = now - shiftStartTime;
+                const hrs = Math.floor(diff / 3600000);
+                const mins = Math.floor((diff % 3600000) / 60000);
+                const secs = Math.floor((diff % 60000) / 1000);
+                timeDisplay.innerText = `${pad(hrs)}:${pad(mins)}:${pad(secs)}`;
+            }, 1000);
+
+        } else {
+            // CLOCK OUT
+            isClockedIn = false;
+            clearInterval(clockTimer);
+            const shiftEndTime = new Date();
+            
+            // CALCULATION & ROUNDING
+            const diffMs = shiftEndTime - shiftStartTime;
+            const rawHours = diffMs / 1000 / 60 / 60; 
+            
+            // Round to nearest 0.25 (15 mins)
+            // Formula: Math.round(hours * 4) / 4
+            const roundedHours = Math.round(rawHours * 4) / 4;
+
+            // Save Data
+            timePunches.push({
+                id: Date.now(),
+                userId: currentUser.id,
+                date: shiftStartTime.toLocaleDateString(),
+                start: formatTime(shiftStartTime),
+                end: formatTime(shiftEndTime),
+                hours: roundedHours
+            });
+
+            // Reset UI
+            btn.innerText = "CLOCK IN";
+            btn.className = "btn-gold";
+            timeDisplay.innerText = "00:00:00";
+            startDisplay.innerText = "";
+            renderMyTimeCard();
+        }
+    }
+
+    function formatTime(date) {
+        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+    function pad(n) { return n < 10 ? '0'+n : n; }
+
+    function renderMyTimeCard() {
+        const tbody = document.querySelector('#my-timecard-table tbody');
+        tbody.innerHTML = "";
+        let totalP = 0;
+        let totalH = 0;
+
+        const myPunches = timePunches.filter(p => p.userId === currentUser.id);
+        
+        if(myPunches.length === 0) {
+            tbody.innerHTML = "<tr><td colspan='4' style='text-align:center; padding:10px;'>No shifts recorded.</td></tr>";
+            return;
+        }
+
+        myPunches.forEach(p => {
+            const pay = p.hours * currentUser.rate;
+            totalP += pay;
+            totalH += p.hours;
+            tbody.innerHTML += `
+                <tr>
+                    <td>${p.date.substring(0, 5)}</td>
+                    <td>
+                        <span style="font-weight:bold;">${p.start}</span>
+                        <span class="time-detail">${p.end}</span>
+                    </td>
+                    <td>${p.hours.toFixed(2)}</td>
+                    <td>$${pay.toFixed(2)}</td>
+                </tr>`;
+        });
+        tbody.innerHTML += `
+            <tr style="font-weight:bold; color:#f5a623; border-top:2px solid #555;">
+                <td colspan="2">TOTAL</td>
+                <td>${totalH.toFixed(2)}</td>
+                <td>$${totalP.toFixed(2)}</td>
+            </tr>`;
+    }
+
+    // --- SHARED FUNCTIONS ---
+    function renderMySchedule() {
+        const list = document.getElementById('my-shifts-list');
+        const openList = document.getElementById('open-shifts-list');
+        list.innerHTML = ""; openList.innerHTML = "";
+
+        shifts.forEach(s => {
+            const html = `
+                <div class="list-item" style="border-left: 4px solid #f5a623;">
+                    <div><strong>${s.date}</strong> (${s.start}-${s.end})<br><span class="role-badge">${s.shiftRole}</span></div>
+                    ${s.userId === currentUser.id ? `<button class="btn-red btn-small" onclick="reqCover(${s.id})">Drop</button>` : ''}
+                </div>`;
+            if(s.userId === currentUser.id && s.status === 'assigned') list.innerHTML += html;
+            else if (s.status === 'cover_requested' && s.userId !== currentUser.id) {
+                openList.innerHTML += `<div class="list-item" style="border-left: 4px solid #d32f2f;"><div><strong>${s.date}</strong> (${s.shiftRole})</div><button class="btn-blue btn-small" onclick="takeShift(${s.id})">Take</button></div>`;
+            }
+        });
+        if(list.innerHTML === "") list.innerHTML = "<small>No shifts.</small>";
+    }
+    
+    function reqCover(id) { if(confirm("Request cover?")) { shifts.find(s=>s.id===id).status = 'cover_requested'; renderMySchedule(); } }
+    function takeShift(id) { if(confirm("Take shift?")) { const s = shifts.find(s=>s.id===id); s.userId = currentUser.id; s.status='assigned'; renderMySchedule(); } }
+
+    function reportSupply() {
+        const item = document.getElementById('supply-item').value;
+        const status = document.getElementById('supply-status').value;
+        if(item) { supplies.push({ id: Date.now(), item, status, resolved: false }); document.getElementById('supply-item').value = ""; renderSupplies(); }
+    }
+    function renderSupplies() {
+        const list = document.getElementById('supply-list'); list.innerHTML = "";
+        supplies.filter(s => !s.resolved).forEach(s => {
+            list.innerHTML += `<div class="list-item"><span>${s.item} - <span style="color:${s.status==='Low'?'orange':'red'}">${s.status}</span></span>${currentUser.role === 'manager' ? `<button class="btn-green btn-small" onclick="resolveSupply(${s.id})">✓</button>` : ''}</div>`;
+        });
+    }
+    function resolveSupply(id) { supplies.find(s => s.id === id).resolved = true; renderSupplies(); }
+
+    // --- MANAGER ONLY ---
+    function renderStaffList() {
+        const div = document.getElementById('staff-list'); div.innerHTML = "";
+        users.forEach(u => div.innerHTML += `<div class="list-item"><div><strong>${u.name}</strong> (PIN: ${u.pin})<br>$${u.rate}/hr</div><button class="btn-blue btn-small" onclick="editRate(${u.id})">Edit</button></div>`);
+    }
+    function addEmployee() {
+        const name = document.getElementById('new-name').value;
+        const pin = document.getElementById('new-pin').value;
+        const rate = parseFloat(document.getElementById('new-rate').value);
+        const role = document.getElementById('new-role').value;
+        if(name && pin && rate) { users.push({ id: Date.now(), name, pin, rate, role }); alert("Added"); renderStaffList(); populateUserSelects(); }
+    }
+    function editRate(id) { const u = users.find(u => u.id === id); const r = prompt("New Rate:", u.rate); if(r) { u.rate = parseFloat(r); renderStaffList(); }}
+    
+    function populateUserSelects() {
+        const s1 = document.getElementById('mgr-assign-staff'); const s2 = document.getElementById('mgr-time-user');
+        s1.innerHTML = ""; s2.innerHTML = `<option value="">Select...</option>`;
+        users.forEach(u => { s1.innerHTML += `<option value="${u.id}">${u.name}</option>`; s2.innerHTML += `<option value="${u.id}">${u.name}</option>`; });
+    }
+    function publishShift() {
+        const userId = parseInt(document.getElementById('mgr-assign-staff').value);
+        const date = document.getElementById('mgr-assign-date').value;
+        const start = document.getElementById('mgr-assign-start').value;
+        const end = document.getElementById('mgr-assign-end').value;
+        const role = document.getElementById('mgr-assign-role').value;
+        const u = users.find(u => u.id === userId);
+        if(date && start) { shifts.push({ id: Date.now(), userId, name: u.name, date, start, end, shiftRole: role, status: 'assigned' }); renderMasterSchedule(); }
+    }
+    function renderMasterSchedule() {
+        const div = document.getElementById('master-schedule-list'); div.innerHTML = "";
+        shifts.forEach(s => div.innerHTML += `<div class="list-item"><div><strong>${s.name}</strong> - ${s.date}<br>${s.start}-${s.end} <span class="role-badge">${s.shiftRole}</span></div><button class="btn-red btn-small" onclick="delShift(${s.id})">X</button></div>`);
+    }
+    function delShift(id) { shifts = shifts.filter(s => s.id !== id); renderMasterSchedule(); }
+
+    function renderAdminTimeCard() {
+        const userId = parseInt(document.getElementById('mgr-time-user').value);
+        const view = document.getElementById('admin-timecard-view'); view.innerHTML = "";
+        if(!userId) return;
+        const u = users.find(u => u.id === userId);
+        const punches = timePunches.filter(p => p.userId === userId);
+        let html = `<h4>${u.name}</h4><table><tr><th>Date</th><th>InOut</th><th>Hrs</th><th>Act</th></tr>`;
+        punches.forEach(p => {
+            html += `<tr><td>${p.date.substring(5)}</td><td><small>${p.start}<br>${p.end}</small></td><td><input type="number" id="hrs-${p.id}" value="${p.hours}" style="width:45px;"></td><td><button class="btn-blue btn-small" onclick="updatePunch(${p.id})">Save</button></td></tr>`;
+        });
+        html += "</table>";
+        view.innerHTML = html;
+    }
+    function updatePunch(id) { const val = document.getElementById(`hrs-${id}`).value; timePunches.find(p => p.id === id).hours = parseFloat(val); alert("Updated"); renderAdminTimeCard(); }
+
+</script>
+</body>
+</html>
